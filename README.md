@@ -1,4 +1,4 @@
 Open Source Search Engine. Coming Soon. 
 
-# Notify Me
+# Updates
 Star/Watch this project here on Github to be notified of launch.
