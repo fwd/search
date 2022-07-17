@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <head>
+        <meta charset="UTF-8">
+        <title>Search</title>
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap"
+        rel="stylesheet">
+        <style>
+            @keyframes fadeInAndExpand {
+              from {
+                opacity: 0;
+                transform: scale(0.25);
+              }
+              50% {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+            @keyframes fadeInFromLeft {
+              from {
+                opacity: 0;
+                transform: translateX(-20px);
+              }
+              50% {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+                transform: translateX(0px);
+              }
+            }
+            @keyframes spin {
+              from {
+                transform: rotate(0deg);
+              }
+              50% {
+                transform: rotate(720deg);
+              }
+              to {
+                transform: rotate(1440deg);
+              }
+            }
+            .spin-animation {
+              animation: spin 2s ease-in-out infinite;
+            }
+            
+            html::-webkit-scrollbar-track {
+              background-color: #1e1e1e;
+            }
+            html::-webkit-scrollbar {
+              height: 4px;
+              width: 4px;
+            }
+            html::-webkit-scrollbar-thumb {
+              background-color: rgba(255, 255, 255, 0.25);
+              border-radius: 10px;
+            }
+            
+            body {
+              background-color: #1e1e1e;
+              margin: 0px;
+              padding: 0px;
+            }
+            body input, body h1, body a {
+              color: #5a5a5a;
+              font-family: "Rubik", sans-serif;
+              font-weight: 400;
+              margin: 0px;
+              padding: 0px;
+            }
+            
+            #app {
+              overflow: hidden;
+            }
+            #app #app-background {
+              height: 100vh;
+              left: 0px;
+              opacity: 0.4;
+              position: fixed;
+              top: 0px;
+              width: 100vw;
+              z-index: 0;
+              pointer-events: none;
+            }
+            #app #app-background.searching #app-background-image {
+              transform: scale(1.25);
+            }
+            #app #app-background.searching #app-background-image-filter {
+              opacity: 1;
+            }
+            #app #app-background #app-background-image,
+            #app #app-background #app-background-image-filter {
+              height: 100%;
+              width: 100%;
+            }
+            #app #app-background #app-background-image {
+              background-position: center;
+              background-repeat: no-repeat;
+              background-size: cover;
+              position: relative;
+              transition: transform 250ms;
+              z-index: 1;
+            }
+            #app #app-background #app-background-image-filter {
+              background-color: rgba(255, 255, 255, 0.1);
+              backdrop-filter: blur(6px);
+              left: 0px;
+              opacity: 0;
+              position: absolute;
+              top: 0px;
+              transition: opacity 250ms;
+              z-index: 2;
+            }
+            #app #search-bar-aligner {
+              align-items: center;
+              display: flex;
+              justify-content: center;
+              height: 100%;
+              pointer-events: none;
+              position: fixed;
+              transition: height 250ms;
+              width: 100%;
+              z-index: 3;
+            }
+            #app #search-bar-aligner.focused #search-bar-wrapper #search-bar #search-bar-logo:after, #app #search-bar-aligner.querying #search-bar-wrapper #search-bar #search-bar-logo:after, #app #search-bar-aligner.searching #search-bar-wrapper #search-bar #search-bar-logo:after {
+              background-color: rgba(255, 255, 255, 0.25);
+              height: 20px;
+              right: 0px;
+              width: 1px;
+            }
+            #app #search-bar-aligner.focused #search-bar-wrapper #search-bar #search-bar-input, #app #search-bar-aligner.querying #search-bar-wrapper #search-bar #search-bar-input, #app #search-bar-aligner.searching #search-bar-wrapper #search-bar #search-bar-input {
+              width: 100%;
+              padding-left: 15px;
+            }
+            #app #search-bar-aligner.focused #search-bar-wrapper #search-bar #search-bar-input::placeholder, #app #search-bar-aligner.querying #search-bar-wrapper #search-bar #search-bar-input::placeholder, #app #search-bar-aligner.searching #search-bar-wrapper #search-bar #search-bar-input::placeholder {
+              color: rgba(255, 255, 255, 0.25);
+            }
+            #app #search-bar-aligner.searching {
+              height: 100px;
+            }
+            #app #search-bar-aligner #search-bar-wrapper {
+              align-items: center;
+              display: flex;
+              flex-direction: column;
+              gap: 5px;
+              margin: 10px;
+              width: 500px;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar {
+              align-items: center;
+              backdrop-filter: blur(5px);
+              background-color: rgba(255, 255, 255, 0.1);
+              border-radius: 6px;
+              box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 6px, rgba(0, 0, 0, 0.12) 0px 1px 4px;
+              display: flex;
+              gap: 10px;
+              justify-content: center;
+              padding: 10px;
+              pointer-events: all;
+              position: relative;
+              width: calc(100% - 20px);
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-clicker {
+              border-radius: 6px;
+              cursor: pointer;
+              height: 100%;
+              left: 0px;
+              position: absolute;
+              top: 0px;
+              width: 100%;
+              z-index: 2;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-logo {
+              color: white;
+              flex-shrink: 0;
+              font-size: 0.9em;
+              height: 20px;
+              line-height: 20px;
+              padding: 5px;
+              /*padding-right: 10px;*/
+              position: relative;
+              text-align: center;
+              width: 14px;
+              display: none;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-logo:after {
+              background-color: white;
+              border-radius: 3px;
+              content: "";
+              height: 3px;
+              position: absolute;
+              right: -2px;
+              top: 50%;
+              transform: translateY(-50%);
+              transition: height 250ms, width 250ms, right 250ms, background-color 250ms;
+              width: 3px;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-input {
+              background-color: transparent;
+              border: none;
+              color: white;
+              font-size: 1em;
+              height: 20px;
+              outline: none;
+              padding: 10px 0px;
+              text-align: left;
+              transition: width 250ms;
+              width: 54px;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-input::placeholder {
+              color: white;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-reset-button {
+              background-color: transparent;
+              border: none;
+              border-radius: 3px;
+              cursor: pointer;
+              flex-shrink: 0;
+              height: 30px;
+              outline: none;
+              padding: 5px;
+              position: relative;
+              width: 30px;
+              z-index: 3;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-reset-button:hover, #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-reset-button:focus {
+              background-color: rgba(255, 255, 255, 0.1);
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar #search-bar-reset-button i {
+              color: white;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar-sass {
+              display: flex;
+              gap: 5px;
+              padding: 0px 10px;
+              pointer-events: all;
+              width: calc(100% - 20px);
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar-sass #search-bar-sass-icon {
+              align-items: center;
+              display: flex;
+              height: 18px;
+              justify-content: center;
+              width: 18px;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar-sass #search-bar-sass-icon.emoji.typing i {
+              animation-duration: 150ms;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar-sass #search-bar-sass-icon.emoji i {
+              animation: fadeInAndExpand 250ms ease-in;
+              font-size: 1em;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar-sass #search-bar-sass-icon i {
+              color: white;
+              font-size: 0.75em;
+              height: 18px;
+              line-height: 18px;
+              text-align: center;
+              width: 18px;
+            }
+            #app #search-bar-aligner #search-bar-wrapper #search-bar-sass #search-bar-sass-statement {
+              animation: fadeInFromLeft 250ms ease-in;
+              color: white;
+              font-size: 0.8em;
+              height: 18px;
+              line-height: 18px;
+            }
+            #app #search-results-wrapper {
+              margin: auto;
+              margin-top: 75px;
+              max-width: 1000px;
+              position: relative;
+              z-index: 2;
+            }
+            #app #search-results-wrapper #search-results {
+              display: grid;
+              gap: 10px;
+              /*grid-auto-rows: 20px;*/
+              grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+              padding: 10px;
+              padding-bottom: 50px;
+            }
+            #app #search-results-wrapper #search-results .search-result {
+              background-color: #1e1e1e;
+              border-radius: 10px;
+              box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+              opacity: 0;
+              overflow: hidden;
+              position: relative;
+              transform: translateY(20px);
+              transition: opacity 250ms, transform 250ms;
+              /*min-height: 300px;*/
+            }
+            #app #search-results-wrapper #search-results .search-result.visible {
+              opacity: 1;
+              transform: translateY(0px);
+            }
+            #app #search-results-wrapper #search-results .search-result.loaded:hover .search-result-background {
+              opacity: 1;
+              transform: scale(1.1);
+            }
+            #app #search-results-wrapper #search-results .search-result.loaded .search-result-background {
+              filter: blur(0px);
+              transform: scale(1);
+            }
+            #app #search-results-wrapper #search-results .search-result.loaded .search-result-info-wrapper {
+              display: flex;
+            }
+            #app #search-results-wrapper #search-results .search-result .search-result-background {
+              background-position: center;
+              background-repeat: no-repeat;
+              background-size: cover;
+              border-radius: 10px;
+              cursor: pointer;
+              display: block;
+              filter: blur(3px);
+              height: 100%;
+              opacity: 0.8;
+              transform: scale(1.25);
+              transition: opacity 250ms, transform 250ms, backgroundImage 250ms, filter 250ms;
+              width: 100%;
+            }
+            #app #search-results-wrapper #search-results .search-result .search-result-info-wrapper {
+              align-items: flex-end;
+              background: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent);
+              border-radius: 10px;
+              display: none;
+              height: 100%;
+              left: 0px;
+              overflow: hidden;
+              pointer-events: none;
+              position: absolute;
+              top: 0px;
+              width: 100%;
+              z-index: 2;
+            }
+            #app #search-results-wrapper #search-results .search-result .search-result-info-wrapper .search-result-info {
+              display: flex;
+              margin: 10px;
+              width: calc(100% - 20px);
+            }
+            #app #search-results-wrapper #search-results .search-result .search-result-info-wrapper .search-result-info .search-result-creator {
+              border-radius: 3px;
+              color: white;
+              font-size: 0.9em;
+              overflow: hidden;
+              padding: 5px 10px;
+              pointer-events: all;
+              text-decoration: none;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            #app #search-results-wrapper #search-results .search-result .search-result-info-wrapper .search-result-info .search-result-creator:hover {
+              backdrop-filter: blur(5px);
+              background-color: rgba(255, 255, 255, 0.1);
+            }
+            #youtube-link {
+              align-items: center;
+              background-color: rgba(255, 255, 255, 0.06);
+              border-radius: 4px;
+              display: inline-flex;
+              gap: 10px;
+              margin: 0px 10px;
+              padding: 10px;
+              text-decoration: none;
+              z-index: 2;
+            }
+            #youtube-link:hover {
+              background-color: rgba(255, 255, 255, 0.16);
+            }
+            #youtube-link i, #youtube-link span {
+              height: 16px;
+              line-height: 16px;
+            }
+            #youtube-link i {
+              color: #ed4245;
+            }
+            #youtube-link span {
+              color: white;
+              font-size: 0.8em;
+              font-weight: 500;
+            }
+            
+            @media (max-width: 1000px) {
+              #app #search-results-wrapper #search-results {
+                /*grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));*/
+              }
+            }
+            @media (max-width: 800px) {
+              #app #search-results-wrapper #search-results {
+                /*grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));*/
+              }
+            }
+            @media (max-width: 500px) {
+              #app #search-results-wrapper #search-results {
+                /*grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));*/
+              }
+            }
+            .new-search-box {
+              color: #FFF;
+              margin-top: 85px;
+              max-width: 528px;
+              margin: 0 auto;
+              margin-top: 90px;
+              backdrop-filter: blur(5px);
+              background-color: rgba(255, 255, 255, 0.1);
+              border-radius: 6px;
+              box-shadow: rgb(0 0 0 / 12%) 0px 1px 6px, rgb(0 0 0 / 12%) 0px 1px 4px;
+              padding: 25px 20px;
+            }
+            .new-search-box .search-item {
+              margin: 15px 0;
+              padding: 10px 15px;
+              border-radius: 3px;
+              cursor: pointer;
+              border-bottom: 1px solid #ffffff17;
+              padding-bottom: 12px;
+            }
+            .new-search-box .search-item:hover {
+              background: #ffffff0f;
+            }
+            .new-search-box .search-item h3 {
+              margin: 0;
+              font-family: sans-serif;
+              margin-bottom: 2px;
+            }
+            .new-search-box .search-item p {
+              font-size: 13px;
+              margin: 0;
+              opacity: 0.7;
+              font-family: sans-serif;
+              color: #fff;
+            }
+            .new-search-box .search-item span {
+              margin: 0;
+              padding: 0 15px;
+              font-size: 12px;
+              padding-left: 0;
+              font-family: 'Rubik';
+              opacity: 0.6;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <!-- partial:index.partial.html -->
+<div id="root">
+    <div id="app">
+        <div :class="`focused querying ${query ? 'searching' : ''}`" id="search-bar-aligner">
+            <div id="search-bar-wrapper">
+                <div id="search-bar">
+                    <i class="fa-regular fa-magnifying-glass" id="search-bar-logo">
+                    </i>
+                    <input autocomplete="off" id="search-bar-input" placeholder="Search" type="text" placeholder="Hit the reset button ➡️" v-model="query">
+                        <button id="search-bar-reset-button" type="button">
+                            <i class="fa-regular fa-arrow-rotate-right">
+                            </i>
+                        </button>
+                    </input>
+                </div>
+                <div id="search-bar-sass">
+                    <div class="emoji" id="search-bar-sass-icon">
+                        <i class="fa-light fa-face-awesome">
+                        </i>
+                    </div>
+                    <!-- <h1 id="search-bar-sass-statement">Search poorly worded. Returning some coffee instead.</h1> -->
+                </div>
+            </div>
+        </div>
+        <div v-if="query" id="search-results-wrapper">
+           <div v-if="query" class="new-search-box">
+              <div v-for="i in 5" class="search-item">
+                <h3>Lorem ipsum dolor sit amet consectetur</h3>
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Vitae sit praesentium impedit veritatis.</p>
+                <span>https://google.com/asddads</span>
+              </div>
+            </div>
+        </div>
+        <div :class="`${query ? 'searching' : ''}`" id="app-background">
+            <div id="app-background-image" :style="`background-color: rgb(89, 89, 64); background-image: url('${'https://source.unsplash.com/1600x900/?' + input}');`">
+            </div>
+            <div v-if="false" id="app-background-image-filter"></div>
+        </div>
+    </div>
+</div>
+
+      <script src="https://api.fwd.dev/vue.js"></script>
+      <script src="https://api.fwd.dev/axios.js"></script>
+
+     <script>
+        var app = new Vue({
+  				el: '#app',
+  				data: { 
+  					timerId: '',
+            message: 'Hello World',
+            busy: false,
+            query: '',
+            search: '',
+            input: '',
+            searching: false
+  				},
+  				mounted() {
+  					this.load()
+  				},
+  				watch: {
+          },
+  				computed: {
+            inputClean() {
+              return this.search.toLowerCase()
+            }
+          },
+  				methods: {
+            onchange() {
+              if (this.input.length < 3) return
+              this.simpleDebounce(() => {
+                this.search = this.input
+              }, 500)
+            },
+             simpleDebounce(fn, delay = 300) {
+              return ((...args) => {
+                clearTimeout(this.timerId)
+                this.timerId = setTimeout(() => {
+                  this.timerId = null
+                  fn(...args)
+                }, delay)
+              })()
+            },
+  					load() {
+  					}
+  				},
+  			})
+      </script>
+        
+    </body>
+
+</html>
